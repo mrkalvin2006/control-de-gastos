@@ -1,70 +1,116 @@
-import { useState, useEffect } from 'react';
-import { Transaction, UserProfile } from './types';
+import { useState, useEffect, useCallback } from 'react';
+import { supabase } from './lib/supabaseClient';
+import { NewTransaction, ROLE_LABELS, SesionUsuario, Transaction } from './types';
 import SummaryCards from './components/SummaryCards';
 import TransactionForm from './components/TransactionForm';
 import LedgerTable from './components/LedgerTable';
 import AuthComponent from './components/Auth';
-import { FileSpreadsheet, LogOut, User } from 'lucide-react';
+import { FileSpreadsheet, LogOut, User, Loader2 } from 'lucide-react';
 import { motion } from 'motion/react';
 
+const SESSION_STORAGE_KEY = 'caja_sesion';
+
 export default function App() {
-  const [user, setUser] = useState<UserProfile | null>(() => {
-    const saved = localStorage.getItem('demo_auth_user');
+  const [sesion, setSesion] = useState<SesionUsuario | null>(() => {
+    const saved = localStorage.getItem(SESSION_STORAGE_KEY);
     return saved ? JSON.parse(saved) : null;
   });
-  
-  const [transactions, setTransactions] = useState<Transaction[]>(() => {
-    const saved = localStorage.getItem('demo_transactions');
-    return saved ? JSON.parse(saved) : [];
-  });
+
+  const [transactions, setTransactions] = useState<Transaction[]>([]);
+  const [loading, setLoading] = useState(false);
+  const [errorMsg, setErrorMsg] = useState('');
+
+  const cerrarSesion = useCallback(() => {
+    setSesion(null);
+    setTransactions([]);
+    localStorage.removeItem(SESSION_STORAGE_KEY);
+  }, []);
 
   useEffect(() => {
-    if (user) {
-      localStorage.setItem('demo_auth_user', JSON.stringify(user));
+    if (sesion) {
+      localStorage.setItem(SESSION_STORAGE_KEY, JSON.stringify(sesion));
     } else {
-      localStorage.removeItem('demo_auth_user');
+      localStorage.removeItem(SESSION_STORAGE_KEY);
     }
-  }, [user]);
+  }, [sesion]);
+
+  const cargarMovimientos = useCallback(async () => {
+    if (!sesion) return;
+    setLoading(true);
+    setErrorMsg('');
+
+    const { data, error } = await supabase.rpc('caja_listar_movimientos', {
+      p_token: sesion.token,
+    });
+
+    setLoading(false);
+
+    if (error) {
+      // La sesión probablemente expiró o el token ya no es válido.
+      setErrorMsg('Tu sesión expiró. Vuelve a iniciar sesión.');
+      cerrarSesion();
+      return;
+    }
+
+    setTransactions(data ?? []);
+  }, [sesion, cerrarSesion]);
 
   useEffect(() => {
-    localStorage.setItem('demo_transactions', JSON.stringify(transactions));
-  }, [transactions]);
+    cargarMovimientos();
+  }, [cargarMovimientos]);
 
-  const handleAddTransaction = (newTx: Omit<Transaction, 'id' | 'userId' | 'userRole'>) => {
-    if (!user) return;
-    const transaction: Transaction = {
-      ...newTx,
-      id: crypto.randomUUID(),
-      userId: user.uid,
-      userRole: user.role,
-      createdAt: Date.now(),
-    };
-    setTransactions(prev => 
-      [transaction, ...prev].sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
+  const handleAddTransaction = async (newTx: NewTransaction) => {
+    if (!sesion) return;
+    setErrorMsg('');
+
+    const { data, error } = await supabase.rpc('caja_crear_movimiento', {
+      p_token: sesion.token,
+      p_tipo: newTx.tipo,
+      p_fecha: newTx.fecha,
+      p_cantidad: newTx.cantidad === '' ? null : newTx.cantidad,
+      p_descripcion: newTx.descripcion,
+      p_monto: newTx.monto,
+    });
+
+    if (error || !data) {
+      setErrorMsg('No se pudo guardar el registro. Intenta nuevamente.');
+      return;
+    }
+
+    setTransactions((prev) =>
+      [data as Transaction, ...prev].sort(
+        (a, b) => new Date(b.fecha).getTime() - new Date(a.fecha).getTime()
+      )
     );
   };
 
-  const handleDeleteTransaction = (id: string) => {
-    if (confirm('¿Estás seguro de que deseas eliminar este registro?')) {
-      setTransactions(prev => prev.filter(t => t.id !== id));
+  const handleDeleteTransaction = async (id: string) => {
+    if (!sesion) return;
+    if (!confirm('¿Estás seguro de que deseas eliminar este registro?')) return;
+
+    const { data, error } = await supabase.rpc('caja_eliminar_movimiento', {
+      p_token: sesion.token,
+      p_id: id,
+    });
+
+    if (error || !data) {
+      setErrorMsg('No se pudo eliminar el registro.');
+      return;
     }
+
+    setTransactions((prev) => prev.filter((t) => t.id !== id));
   };
 
-  if (!user) {
-    return <AuthComponent onLogin={setUser} />;
+  const handleLogout = async () => {
+    if (sesion) {
+      await supabase.rpc('caja_logout', { p_token: sesion.token });
+    }
+    cerrarSesion();
+  };
+
+  if (!sesion) {
+    return <AuthComponent onLogin={setSesion} />;
   }
-
-  const roleLabels: Record<string, string> = {
-    caja_chica: 'Caja Chica',
-    caja_central: 'Caja Central',
-    asistenta_social: 'Asistenta Social',
-    prensa: 'Prensa / Propaganda',
-    presidente: 'Presidente (Consolidado)',
-  };
-
-  const filteredTransactions = user.role === 'presidente' 
-    ? transactions 
-    : transactions.filter(t => t.userId === user.uid);
 
   return (
     <div className="min-h-screen bg-slate-50 font-sans text-slate-900 pb-12">
@@ -82,12 +128,12 @@ export default function App() {
                 <User size={18} />
               </div>
               <div className="hidden sm:block">
-                <p className="font-bold text-slate-900 leading-none mb-0.5">{user.name}</p>
-                <p className="text-xs font-medium text-slate-500">{roleLabels[user.role]}</p>
+                <p className="font-bold text-slate-900 leading-none mb-0.5">{sesion.username}</p>
+                <p className="text-xs font-medium text-slate-500">{ROLE_LABELS[sesion.role] ?? sesion.role}</p>
               </div>
             </div>
             <button
-              onClick={() => setUser(null)}
+              onClick={handleLogout}
               className="flex items-center space-x-2 text-sm font-semibold text-rose-600 hover:text-rose-700 bg-rose-50 hover:bg-rose-100 px-4 py-2 rounded-xl transition-colors active:scale-[0.98]"
             >
               <LogOut size={18} />
@@ -100,27 +146,46 @@ export default function App() {
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="mb-8">
           <h2 className="text-3xl font-bold text-slate-900 tracking-tight">
-            {user.role === 'presidente' ? 'Consolidado General' : `Panel de ${roleLabels[user.role]}`}
+            {sesion.veConsolidado ? 'Consolidado General' : `Panel de ${ROLE_LABELS[sesion.role] ?? sesion.role}`}
           </h2>
           <p className="text-slate-500 text-base mt-2 max-w-2xl">
-            {user.role === 'presidente' 
+            {sesion.veConsolidado
               ? 'Vista general de todos los ingresos y egresos registrados por los diferentes usuarios.'
               : 'Gestiona tus propios ingresos y egresos de forma segura e independiente.'}
           </p>
         </motion.div>
 
-        <SummaryCards transactions={filteredTransactions} />
-        
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-          {user.role !== 'presidente' && (
-            <div className="lg:col-span-1">
-               <TransactionForm onAdd={handleAddTransaction} />
-            </div>
-          )}
-          <div className={user.role === 'presidente' ? 'lg:col-span-3' : 'lg:col-span-2'}>
-             <LedgerTable transactions={filteredTransactions} onDelete={handleDeleteTransaction} userRole={user.role} />
+        {errorMsg && (
+          <div className="mb-6 text-rose-600 text-sm bg-rose-50 p-3 rounded-xl border border-rose-100">
+            {errorMsg}
           </div>
-        </div>
+        )}
+
+        {loading && transactions.length === 0 ? (
+          <div className="flex items-center justify-center py-20 text-slate-400">
+            <Loader2 className="animate-spin mr-2" size={20} />
+            Cargando movimientos...
+          </div>
+        ) : (
+          <>
+            <SummaryCards transactions={transactions} />
+
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+              {!sesion.veConsolidado && (
+                <div className="lg:col-span-1">
+                  <TransactionForm onAdd={handleAddTransaction} />
+                </div>
+              )}
+              <div className={sesion.veConsolidado ? 'lg:col-span-3' : 'lg:col-span-2'}>
+                <LedgerTable
+                  transactions={transactions}
+                  onDelete={handleDeleteTransaction}
+                  veConsolidado={sesion.veConsolidado}
+                />
+              </div>
+            </div>
+          </>
+        )}
       </main>
     </div>
   );

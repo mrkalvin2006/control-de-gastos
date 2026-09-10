@@ -1,6 +1,5 @@
 {
   "name": "Libro de Caja - Ingresos y Egresos",
-  "description": "Aplicación web para gestionar ingresos y egresos financieros con interfaz moderna y adaptable.",
-  "requestFramePermissions": [],
-  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+  "description": "Aplicación web para el control de ingresos y egresos del Centro Artesanal, conectada a Supabase.",
+  "requestFramePermissions": []
 }

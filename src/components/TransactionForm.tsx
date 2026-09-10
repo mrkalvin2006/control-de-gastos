@@ -1,34 +1,37 @@
 import { useState } from 'react';
-import { Transaction, TransactionType } from '../types';
+import { NewTransaction, TransactionType } from '../types';
 import { motion } from 'motion/react';
 import { PlusCircle, MinusCircle, Plus } from 'lucide-react';
 
 interface Props {
-  onAdd: (transaction: Omit<Transaction, 'id' | 'userId' | 'userRole'>) => void;
+  onAdd: (transaction: NewTransaction) => void | Promise<void>;
 }
 
 export default function TransactionForm({ onAdd }: Props) {
-  const [type, setType] = useState<TransactionType>('ingreso');
-  const [date, setDate] = useState(new Date().toISOString().split('T')[0]);
-  const [quantity, setQuantity] = useState<number | ''>('');
-  const [description, setDescription] = useState('');
-  const [amount, setAmount] = useState<number | ''>('');
+  const [tipo, setTipo] = useState<TransactionType>('ingreso');
+  const [fecha, setFecha] = useState(new Date().toISOString().split('T')[0]);
+  const [cantidad, setCantidad] = useState<number | ''>('');
+  const [descripcion, setDescripcion] = useState('');
+  const [monto, setMonto] = useState<number | ''>('');
+  const [submitting, setSubmitting] = useState(false);
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!description || !amount) return;
+    if (!descripcion || !monto) return;
 
-    onAdd({
-      type,
-      date,
-      quantity,
-      description,
-      amount: Number(amount),
+    setSubmitting(true);
+    await onAdd({
+      tipo,
+      fecha,
+      cantidad,
+      descripcion,
+      monto: Number(monto),
     });
+    setSubmitting(false);
 
-    setDescription('');
-    setAmount('');
-    setQuantity('');
+    setDescripcion('');
+    setMonto('');
+    setCantidad('');
   };
 
   return (
@@ -42,9 +45,9 @@ export default function TransactionForm({ onAdd }: Props) {
         <div className="flex space-x-3 mb-2 p-1 bg-slate-100/50 rounded-2xl">
           <button
             type="button"
-            onClick={() => setType('ingreso')}
+            onClick={() => setTipo('ingreso')}
             className={`flex-1 py-2.5 px-4 rounded-xl flex items-center justify-center space-x-2 transition-all ${
-              type === 'ingreso'
+              tipo === 'ingreso'
                 ? 'bg-emerald-500 text-white shadow-md shadow-emerald-200 scale-[1.02]'
                 : 'bg-transparent text-slate-500 hover:text-slate-700 hover:bg-slate-100'
             }`}
@@ -54,9 +57,9 @@ export default function TransactionForm({ onAdd }: Props) {
           </button>
           <button
             type="button"
-            onClick={() => setType('egreso')}
+            onClick={() => setTipo('egreso')}
             className={`flex-1 py-2.5 px-4 rounded-xl flex items-center justify-center space-x-2 transition-all ${
-              type === 'egreso'
+              tipo === 'egreso'
                 ? 'bg-rose-500 text-white shadow-md shadow-rose-200 scale-[1.02]'
                 : 'bg-transparent text-slate-500 hover:text-slate-700 hover:bg-slate-100'
             }`}
@@ -72,8 +75,8 @@ export default function TransactionForm({ onAdd }: Props) {
             <input
               type="date"
               required
-              value={date}
-              onChange={(e) => setDate(e.target.value)}
+              value={fecha}
+              onChange={(e) => setFecha(e.target.value)}
               className="w-full px-4 py-2.5 bg-slate-50/50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none transition-all text-slate-700"
             />
           </div>
@@ -82,8 +85,8 @@ export default function TransactionForm({ onAdd }: Props) {
             <input
               type="number"
               min="1"
-              value={quantity}
-              onChange={(e) => setQuantity(e.target.value ? Number(e.target.value) : '')}
+              value={cantidad}
+              onChange={(e) => setCantidad(e.target.value ? Number(e.target.value) : '')}
               placeholder="Opcional"
               className="w-full px-4 py-2.5 bg-slate-50/50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none transition-all text-slate-700"
             />
@@ -93,8 +96,8 @@ export default function TransactionForm({ onAdd }: Props) {
             <input
               type="text"
               required
-              value={description}
-              onChange={(e) => setDescription(e.target.value)}
+              value={descripcion}
+              onChange={(e) => setDescripcion(e.target.value)}
               placeholder="¿De qué trata esta transacción?"
               className="w-full px-4 py-2.5 bg-slate-50/50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none transition-all text-slate-700"
             />
@@ -106,8 +109,8 @@ export default function TransactionForm({ onAdd }: Props) {
               required
               min="0.01"
               step="0.01"
-              value={amount}
-              onChange={(e) => setAmount(e.target.value ? Number(e.target.value) : '')}
+              value={monto}
+              onChange={(e) => setMonto(e.target.value ? Number(e.target.value) : '')}
               placeholder="0.00"
               className="w-full px-4 py-3 bg-white border-2 border-slate-200 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none transition-all text-xl font-semibold text-slate-800 placeholder-slate-300"
             />
@@ -116,10 +119,11 @@ export default function TransactionForm({ onAdd }: Props) {
 
         <button
           type="submit"
-          className="w-full py-3.5 px-4 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl font-semibold flex items-center justify-center space-x-2 transition-all shadow-md shadow-indigo-200 mt-2 active:scale-[0.98]"
+          disabled={submitting}
+          className="w-full py-3.5 px-4 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl font-semibold flex items-center justify-center space-x-2 transition-all shadow-md shadow-indigo-200 mt-2 active:scale-[0.98] disabled:opacity-60 disabled:cursor-not-allowed"
         >
           <Plus size={20} />
-          <span>Agregar Registro</span>
+          <span>{submitting ? 'Guardando...' : 'Agregar Registro'}</span>
         </button>
       </form>
     </motion.div>

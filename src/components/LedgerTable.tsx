@@ -1,16 +1,16 @@
-import { Transaction, UserRole } from '../types';
+import { ROLE_LABELS, Transaction } from '../types';
 import { motion, AnimatePresence } from 'motion/react';
 import { Trash2 } from 'lucide-react';
 
 interface Props {
   transactions: Transaction[];
   onDelete: (id: string) => void;
-  userRole: UserRole;
+  veConsolidado: boolean;
 }
 
-export default function LedgerTable({ transactions, onDelete, userRole }: Props) {
-  const ingresos = transactions.filter((t) => t.type === 'ingreso');
-  const egresos = transactions.filter((t) => t.type === 'egreso');
+export default function LedgerTable({ transactions, onDelete, veConsolidado }: Props) {
+  const ingresos = transactions.filter((t) => t.tipo === 'ingreso');
+  const egresos = transactions.filter((t) => t.tipo === 'egreso');
 
   const formatCurrency = (amount: number) => {
     return new Intl.NumberFormat('es-PE', {
@@ -28,13 +28,7 @@ export default function LedgerTable({ transactions, onDelete, userRole }: Props)
     }).format(date);
   };
 
-  const roleLabels: Record<string, string> = {
-    caja_chica: 'Caja Chica',
-    caja_central: 'Caja Central',
-    asistenta_social: 'Asist. Social',
-    prensa: 'Prensa',
-    presidente: 'Presidente',
-  };
+  const columnCount = veConsolidado ? 5 : 5;
 
   const TableHeader = () => (
     <thead className="bg-slate-50 border-b border-slate-200">
@@ -42,11 +36,11 @@ export default function LedgerTable({ transactions, onDelete, userRole }: Props)
         <th className="px-5 py-4 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">Fecha</th>
         <th className="px-5 py-4 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">Cant.</th>
         <th className="px-5 py-4 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider w-full">Descripción</th>
-        {userRole === 'presidente' && (
+        {veConsolidado && (
           <th className="px-5 py-4 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">Origen</th>
         )}
         <th className="px-5 py-4 text-right text-xs font-semibold text-slate-500 uppercase tracking-wider">Monto</th>
-        {userRole !== 'presidente' && (
+        {!veConsolidado && (
           <th className="px-5 py-4 text-center text-xs font-semibold text-slate-500 uppercase tracking-wider w-12"></th>
         )}
       </tr>
@@ -60,18 +54,20 @@ export default function LedgerTable({ transactions, onDelete, userRole }: Props)
       exit={{ opacity: 0, height: 0 }}
       className="border-b border-slate-100 hover:bg-slate-50/50 transition-colors"
     >
-      <td className="px-5 py-4 whitespace-nowrap text-sm text-slate-500 font-medium">{formatDate(t.date)}</td>
-      <td className="px-5 py-4 whitespace-nowrap text-sm text-slate-500 text-center">{t.quantity || '-'}</td>
-      <td className="px-5 py-4 text-sm text-slate-800">{t.description}</td>
-      {userRole === 'presidente' && (
+      <td className="px-5 py-4 whitespace-nowrap text-sm text-slate-500 font-medium">{formatDate(t.fecha)}</td>
+      <td className="px-5 py-4 whitespace-nowrap text-sm text-slate-500 text-center">{t.cantidad ?? '-'}</td>
+      <td className="px-5 py-4 text-sm text-slate-800">{t.descripcion}</td>
+      {veConsolidado && (
         <td className="px-5 py-4 whitespace-nowrap text-xs font-medium text-slate-500">
-          <span className="bg-slate-100 text-slate-600 px-2.5 py-1 rounded-md">{roleLabels[t.userRole] || t.userRole}</span>
+          <span className="bg-slate-100 text-slate-600 px-2.5 py-1 rounded-md">
+            {ROLE_LABELS[t.role] ?? t.role} · {t.username}
+          </span>
         </td>
       )}
       <td className={`px-5 py-4 whitespace-nowrap text-sm font-bold text-right ${colorClass}`}>
-        {formatCurrency(t.amount)}
+        {formatCurrency(t.monto)}
       </td>
-      {userRole !== 'presidente' && (
+      {!veConsolidado && (
         <td className="px-5 py-4 whitespace-nowrap text-right text-sm font-medium">
           <button
             onClick={() => onDelete(t.id)}
@@ -99,7 +95,7 @@ export default function LedgerTable({ transactions, onDelete, userRole }: Props)
               <AnimatePresence>
                 {ingresos.length === 0 ? (
                   <tr>
-                    <td colSpan={userRole === 'presidente' ? 5 : 5} className="px-5 py-12 text-center text-sm text-slate-400">
+                    <td colSpan={columnCount} className="px-5 py-12 text-center text-sm text-slate-400">
                       No hay ingresos registrados.
                     </td>
                   </tr>
@@ -124,7 +120,7 @@ export default function LedgerTable({ transactions, onDelete, userRole }: Props)
               <AnimatePresence>
                 {egresos.length === 0 ? (
                   <tr>
-                    <td colSpan={userRole === 'presidente' ? 5 : 5} className="px-5 py-12 text-center text-sm text-slate-400">
+                    <td colSpan={columnCount} className="px-5 py-12 text-center text-sm text-slate-400">
                       No hay egresos registrados.
                     </td>
                   </tr>

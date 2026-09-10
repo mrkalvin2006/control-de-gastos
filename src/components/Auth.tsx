@@ -1,49 +1,44 @@
 import { useState } from 'react';
-import { UserProfile } from '../types';
-import { Lock, Wallet, User as UserIcon, LogIn } from 'lucide-react';
+import { supabase } from '../lib/supabaseClient';
+import { SesionUsuario, UserRole } from '../types';
+import { Lock, Wallet, User as UserIcon, LogIn, Loader2 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 
-const MOCK_USERS = [
-  { uid: '1', username: 'presidente', password: 'presidente1', role: 'presidente', name: 'Presidente' },
-  { uid: '2', username: 'cajachica', password: 'cajachica1', role: 'caja_chica', name: 'Caja Chica' },
-  { uid: '3', username: 'cajacentral', password: 'cajacentral1', role: 'caja_central', name: 'Caja Central' },
-  { uid: '4', username: 'asistenta', password: 'asistenta1', role: 'asistenta_social', name: 'Asistenta Social' },
-  { uid: '5', username: 'prensa', password: 'prensa1', role: 'prensa', name: 'Prensa Propaganda' },
-];
-
 interface Props {
-  onLogin: (user: UserProfile) => void;
+  onLogin: (sesion: SesionUsuario) => void;
 }
 
 export default function Auth({ onLogin }: Props) {
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
+  const [loading, setLoading] = useState(false);
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
+    setLoading(true);
 
-    const foundUser = MOCK_USERS.find(
-      (u) => u.username.toLowerCase() === username.toLowerCase().trim() && u.password === password
-    );
+    const { data, error: rpcError } = await supabase.rpc('caja_login', {
+      p_username: username.trim(),
+      p_password: password,
+    });
 
-    if (foundUser) {
-      onLogin({
-        uid: foundUser.uid,
-        role: foundUser.role as any,
-        name: foundUser.name,
-        email: `${foundUser.username}@sistema.com`,
-      });
-    } else {
+    setLoading(false);
+
+    if (rpcError || !data || data.length === 0) {
       setError('Usuario o contraseña incorrectos.');
+      return;
     }
-  };
 
-  const handleFillDemo = (u: any) => {
-    setUsername(u.username);
-    setPassword(u.password);
-    setError('');
+    const row = data[0];
+    onLogin({
+      token: row.token,
+      userProfileId: row.user_profile_id,
+      username: row.username,
+      role: row.role as UserRole,
+      veConsolidado: row.ve_consolidado,
+    });
   };
 
   return (
@@ -58,7 +53,7 @@ export default function Auth({ onLogin }: Props) {
           Libro de Caja
         </h1>
         <h2 className="mt-2 text-center text-sm text-slate-600">
-          Ingresa tus credenciales para acceder al sistema
+          Control de Ingresos y Egresos · Centro Artesanal
         </h2>
       </motion.div>
 
@@ -74,10 +69,11 @@ export default function Auth({ onLogin }: Props) {
                 <input
                   type="text"
                   required
+                  autoComplete="username"
                   value={username}
                   onChange={(e) => setUsername(e.target.value)}
                   className="block w-full rounded-xl border border-slate-200 pl-10 px-3 py-2.5 text-slate-900 placeholder-slate-400 focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500 sm:text-sm transition-colors"
-                  placeholder="Ej. presidente"
+                  placeholder="Tu usuario del sistema"
                 />
               </div>
             </div>
@@ -91,6 +87,7 @@ export default function Auth({ onLogin }: Props) {
                 <input
                   type="password"
                   required
+                  autoComplete="current-password"
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   className="block w-full rounded-xl border border-slate-200 pl-10 px-3 py-2.5 text-slate-900 placeholder-slate-400 focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500 sm:text-sm transition-colors"
@@ -115,30 +112,18 @@ export default function Auth({ onLogin }: Props) {
             <div className="pt-2">
               <button
                 type="submit"
-                className="flex w-full justify-center items-center space-x-2 rounded-xl border border-transparent bg-indigo-600 py-3 px-4 text-sm font-semibold text-white shadow-md shadow-indigo-200 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 transition-all active:scale-[0.98]"
+                disabled={loading}
+                className="flex w-full justify-center items-center space-x-2 rounded-xl border border-transparent bg-indigo-600 py-3 px-4 text-sm font-semibold text-white shadow-md shadow-indigo-200 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 transition-all active:scale-[0.98] disabled:opacity-60 disabled:cursor-not-allowed"
               >
-                <LogIn size={20} />
-                <span>Ingresar al Sistema</span>
+                {loading ? <Loader2 size={20} className="animate-spin" /> : <LogIn size={20} />}
+                <span>{loading ? 'Ingresando...' : 'Ingresar al Sistema'}</span>
               </button>
             </div>
           </form>
 
-          <div className="mt-8 pt-6 border-t border-slate-100">
-            <p className="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-4 text-center">Usuarios de Prueba</p>
-            <div className="grid grid-cols-2 gap-2">
-              {MOCK_USERS.map((u) => (
-                <button
-                  key={u.uid}
-                  type="button"
-                  onClick={() => handleFillDemo(u)}
-                  className="text-left px-3 py-2 text-xs rounded-lg bg-slate-50 hover:bg-indigo-50 border border-slate-200 hover:border-indigo-200 text-slate-700 hover:text-indigo-700 transition-colors"
-                >
-                  <div className="font-semibold">{u.name}</div>
-                  <div className="text-slate-500 text-[10px] truncate">{u.username}</div>
-                </button>
-              ))}
-            </div>
-          </div>
+          <p className="mt-6 text-center text-xs text-slate-400">
+            Usa el mismo usuario y contraseña con los que ingresas al sistema del Centro Artesanal.
+          </p>
         </div>
       </motion.div>
     </div>

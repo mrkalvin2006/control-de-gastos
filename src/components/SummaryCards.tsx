@@ -10,11 +10,11 @@ interface Props {
 
 export default function SummaryCards({ transactions }: Props) {
   const ingresos = transactions
-    .filter((t) => t.type === 'ingreso')
-    .reduce((acc, t) => acc + t.amount, 0);
+    .filter((t) => t.tipo === 'ingreso')
+    .reduce((acc, t) => acc + t.monto, 0);
   const egresos = transactions
-    .filter((t) => t.type === 'egreso')
-    .reduce((acc, t) => acc + t.amount, 0);
+    .filter((t) => t.tipo === 'egreso')
+    .reduce((acc, t) => acc + t.monto, 0);
   const saldo = ingresos - egresos;
 
   const formatCurrency = (amount: number) => {
@@ -27,12 +27,12 @@ export default function SummaryCards({ transactions }: Props) {
   const chartData = useMemo(() => {
     // Group transactions by date
     const grouped = transactions.reduce((acc, t) => {
-      const date = t.date;
+      const date = t.fecha;
       if (!acc[date]) {
         acc[date] = { date, ingresos: 0, egresos: 0 };
       }
-      if (t.type === 'ingreso') acc[date].ingresos += t.amount;
-      if (t.type === 'egreso') acc[date].egresos += t.amount;
+      if (t.tipo === 'ingreso') acc[date].ingresos += t.monto;
+      if (t.tipo === 'egreso') acc[date].egresos += t.monto;
       return acc;
     }, {} as Record<string, { date: string; ingresos: number; egresos: number }>);
 
