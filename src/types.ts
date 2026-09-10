@@ -1,8 +1,6 @@
 export type TransactionType = 'ingreso' | 'egreso';
 
 // Roles reales existentes en la tabla user_profiles del Centro Artesanal.
-// El check constraint de la tabla permite estos valores; no todos están
-// necesariamente en uso, pero cualquiera de ellos puede iniciar sesión.
 export type UserRole =
   | 'administrador'
   | 'admin'
@@ -28,10 +26,31 @@ export const ROLE_LABELS: Record<UserRole, string> = {
   encargado_publicidad: 'Prensa / Propaganda',
 };
 
+// Nombre del ícono lucide-react a usar por rol en el selector de perfiles.
+// Se mapea a componentes reales en Auth.tsx.
+export const ROLE_ICON_NAME: Record<UserRole, string> = {
+  administrador: 'ShieldCheck',
+  admin: 'ShieldCheck',
+  presidente: 'Crown',
+  presidentecac: 'Crown',
+  secretario: 'FileText',
+  delegadodepasaje: 'MapPin',
+  encargado_limpieza: 'Sparkles',
+  encargado_seguridad: 'ShieldAlert',
+  encargado_asistencia_social: 'HeartHandshake',
+  encargado_publicidad: 'Megaphone',
+};
+
 // Roles que ven el consolidado general (todos los movimientos, de todos).
 // Debe reflejar la misma lista definida en la función SQL
 // public.caja_es_rol_consolidado del proyecto de Supabase.
 export const ROLES_CONSOLIDADO: UserRole[] = ['presidente', 'presidentecac', 'admin', 'administrador'];
+
+export interface Perfil {
+  userProfileId: string;
+  username: string;
+  role: UserRole;
+}
 
 export interface SesionUsuario {
   token: string;

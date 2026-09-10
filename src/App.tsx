@@ -5,7 +5,7 @@ import SummaryCards from './components/SummaryCards';
 import TransactionForm from './components/TransactionForm';
 import LedgerTable from './components/LedgerTable';
 import AuthComponent from './components/Auth';
-import { FileSpreadsheet, LogOut, User, Loader2 } from 'lucide-react';
+import { LogOut, Loader2 } from 'lucide-react';
 import { motion } from 'motion/react';
 
 const SESSION_STORAGE_KEY = 'caja_sesion';
@@ -46,7 +46,6 @@ export default function App() {
     setLoading(false);
 
     if (error) {
-      // La sesión probablemente expiró o el token ya no es válido.
       setErrorMsg('Tu sesión expiró. Vuelve a iniciar sesión.');
       cerrarSesion();
       return;
@@ -113,28 +112,26 @@ export default function App() {
   }
 
   return (
-    <div className="min-h-screen bg-slate-50 font-sans text-slate-900 pb-12">
-      <header className="bg-white border-b border-slate-200 sticky top-0 z-50 shadow-sm shadow-slate-100">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 flex items-center justify-between">
+    <div className="min-h-screen bg-slate-950 font-sans text-slate-100 pb-12">
+      <div className="h-1 bg-gradient-to-r from-red-600 via-red-500 to-emerald-600" />
+
+      <header className="bg-slate-900 border-b border-slate-800 sticky top-0 z-50 shadow-lg shadow-black/20">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-3.5 flex items-center justify-between">
           <div className="flex items-center space-x-3">
-            <div className="bg-indigo-600 p-2.5 rounded-xl text-white shadow-md shadow-indigo-200">
-              <FileSpreadsheet size={24} />
+            <img src="/logo-centro-artesanal.png" alt="Centro Artesanal Cusco" className="w-11 h-11 object-contain" />
+            <div>
+              <h1 className="text-lg font-bold text-white leading-tight">Libro de Caja</h1>
+              <p className="text-xs text-slate-400 leading-tight">Centro Artesanal Cusco</p>
             </div>
-            <h1 className="text-xl font-bold text-slate-900 hidden sm:block">Libro de Caja</h1>
           </div>
           <div className="flex items-center space-x-4">
-            <div className="flex items-center space-x-3 text-sm text-slate-600 border-r border-slate-200 pr-4">
-              <div className="bg-indigo-50 p-2 rounded-full text-indigo-600">
-                <User size={18} />
-              </div>
-              <div className="hidden sm:block">
-                <p className="font-bold text-slate-900 leading-none mb-0.5">{sesion.username}</p>
-                <p className="text-xs font-medium text-slate-500">{ROLE_LABELS[sesion.role] ?? sesion.role}</p>
-              </div>
+            <div className="hidden sm:block text-right border-r border-slate-800 pr-4">
+              <p className="font-bold text-white leading-none mb-1 text-sm">{sesion.username}</p>
+              <p className="text-xs font-medium text-red-400">{ROLE_LABELS[sesion.role] ?? sesion.role}</p>
             </div>
             <button
               onClick={handleLogout}
-              className="flex items-center space-x-2 text-sm font-semibold text-rose-600 hover:text-rose-700 bg-rose-50 hover:bg-rose-100 px-4 py-2 rounded-xl transition-colors active:scale-[0.98]"
+              className="flex items-center space-x-2 text-sm font-semibold text-slate-300 hover:text-white bg-slate-800 hover:bg-slate-700 px-4 py-2 rounded-xl transition-colors active:scale-[0.98]"
             >
               <LogOut size={18} />
               <span className="hidden sm:inline">Cerrar Sesión</span>
@@ -145,10 +142,10 @@ export default function App() {
 
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="mb-8">
-          <h2 className="text-3xl font-bold text-slate-900 tracking-tight">
+          <h2 className="text-3xl font-bold text-white tracking-tight">
             {sesion.veConsolidado ? 'Consolidado General' : `Panel de ${ROLE_LABELS[sesion.role] ?? sesion.role}`}
           </h2>
-          <p className="text-slate-500 text-base mt-2 max-w-2xl">
+          <p className="text-slate-400 text-base mt-2 max-w-2xl">
             {sesion.veConsolidado
               ? 'Vista general de todos los ingresos y egresos registrados por los diferentes usuarios.'
               : 'Gestiona tus propios ingresos y egresos de forma segura e independiente.'}
@@ -156,13 +153,13 @@ export default function App() {
         </motion.div>
 
         {errorMsg && (
-          <div className="mb-6 text-rose-600 text-sm bg-rose-50 p-3 rounded-xl border border-rose-100">
+          <div className="mb-6 text-red-400 text-sm bg-red-950/40 border border-red-900/50 p-3 rounded-xl">
             {errorMsg}
           </div>
         )}
 
         {loading && transactions.length === 0 ? (
-          <div className="flex items-center justify-center py-20 text-slate-400">
+          <div className="flex items-center justify-center py-20 text-slate-500">
             <Loader2 className="animate-spin mr-2" size={20} />
             Cargando movimientos...
           </div>

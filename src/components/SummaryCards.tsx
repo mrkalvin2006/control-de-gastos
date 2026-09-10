@@ -25,7 +25,6 @@ export default function SummaryCards({ transactions }: Props) {
   };
 
   const chartData = useMemo(() => {
-    // Group transactions by date
     const grouped = transactions.reduce((acc, t) => {
       const date = t.fecha;
       if (!acc[date]) {
@@ -45,17 +44,17 @@ export default function SummaryCards({ transactions }: Props) {
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
-          className="bg-white rounded-3xl p-6 shadow-sm border border-slate-100 flex items-center space-x-5 relative overflow-hidden"
+          className="bg-slate-900 rounded-2xl p-6 border border-slate-800 flex items-center space-x-5 relative overflow-hidden"
         >
-          <div className="absolute top-0 right-0 p-4 opacity-5">
+          <div className="absolute top-0 right-0 p-4 opacity-5 text-emerald-400">
             <TrendingUp size={100} />
           </div>
-          <div className="p-4 bg-emerald-50 rounded-2xl text-emerald-600 shadow-inner">
+          <div className="p-4 bg-emerald-950/50 rounded-2xl text-emerald-400">
             <TrendingUp size={28} />
           </div>
           <div className="z-10">
-            <p className="text-sm font-medium text-slate-500 uppercase tracking-wider mb-1">Ingresos Totales</p>
-            <p className="text-3xl font-bold text-slate-900">{formatCurrency(ingresos)}</p>
+            <p className="text-sm font-medium text-slate-400 uppercase tracking-wider mb-1">Ingresos Totales</p>
+            <p className="text-3xl font-bold text-white">{formatCurrency(ingresos)}</p>
           </div>
         </motion.div>
 
@@ -63,17 +62,17 @@ export default function SummaryCards({ transactions }: Props) {
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.1 }}
-          className="bg-white rounded-3xl p-6 shadow-sm border border-slate-100 flex items-center space-x-5 relative overflow-hidden"
+          className="bg-slate-900 rounded-2xl p-6 border border-slate-800 flex items-center space-x-5 relative overflow-hidden"
         >
-          <div className="absolute top-0 right-0 p-4 opacity-5">
+          <div className="absolute top-0 right-0 p-4 opacity-5 text-red-400">
             <TrendingDown size={100} />
           </div>
-          <div className="p-4 bg-rose-50 rounded-2xl text-rose-600 shadow-inner">
+          <div className="p-4 bg-red-950/50 rounded-2xl text-red-400">
             <TrendingDown size={28} />
           </div>
           <div className="z-10">
-            <p className="text-sm font-medium text-slate-500 uppercase tracking-wider mb-1">Egresos Totales</p>
-            <p className="text-3xl font-bold text-slate-900">{formatCurrency(egresos)}</p>
+            <p className="text-sm font-medium text-slate-400 uppercase tracking-wider mb-1">Egresos Totales</p>
+            <p className="text-3xl font-bold text-white">{formatCurrency(egresos)}</p>
           </div>
         </motion.div>
 
@@ -81,17 +80,17 @@ export default function SummaryCards({ transactions }: Props) {
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.2 }}
-          className={`bg-white rounded-3xl p-6 shadow-sm border flex items-center space-x-5 relative overflow-hidden ${saldo < 0 ? 'border-rose-200 shadow-rose-100/50' : 'border-indigo-100 shadow-indigo-100/50'}`}
+          className={`bg-slate-900 rounded-2xl p-6 border flex items-center space-x-5 relative overflow-hidden ${saldo < 0 ? 'border-red-900/60' : 'border-blue-900/60'}`}
         >
-          <div className="absolute top-0 right-0 p-4 opacity-5">
+          <div className="absolute top-0 right-0 p-4 opacity-5 text-blue-400">
             <Wallet size={100} />
           </div>
-          <div className={`p-4 rounded-2xl shadow-inner ${saldo >= 0 ? 'bg-indigo-50 text-indigo-600' : 'bg-rose-50 text-rose-600'}`}>
+          <div className={`p-4 rounded-2xl ${saldo >= 0 ? 'bg-blue-950/50 text-blue-400' : 'bg-red-950/50 text-red-400'}`}>
             <Wallet size={28} />
           </div>
           <div className="z-10">
-            <p className="text-sm font-medium text-slate-500 uppercase tracking-wider mb-1">Saldo Actual</p>
-            <p className={`text-3xl font-bold ${saldo >= 0 ? 'text-slate-900' : 'text-rose-600'}`}>{formatCurrency(saldo)}</p>
+            <p className="text-sm font-medium text-slate-400 uppercase tracking-wider mb-1">Saldo Actual</p>
+            <p className={`text-3xl font-bold ${saldo >= 0 ? 'text-white' : 'text-red-400'}`}>{formatCurrency(saldo)}</p>
           </div>
         </motion.div>
       </div>
@@ -101,53 +100,55 @@ export default function SummaryCards({ transactions }: Props) {
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.3 }}
-          className="bg-white p-6 rounded-3xl shadow-sm border border-slate-100"
+          className="bg-slate-900 p-6 rounded-2xl border border-slate-800"
         >
           <div className="flex items-center space-x-2 mb-6">
-            <div className="p-2 bg-indigo-50 text-indigo-600 rounded-lg">
+            <div className="p-2 bg-blue-950/50 text-blue-400 rounded-lg">
               <PieChartIcon size={20} />
             </div>
-            <h3 className="text-lg font-semibold text-slate-800">Flujo Financiero en el Tiempo</h3>
+            <h3 className="text-lg font-semibold text-white">Flujo Financiero en el Tiempo</h3>
           </div>
           <div className="h-72 w-full">
             <ResponsiveContainer width="100%" height="100%">
               <AreaChart data={chartData} margin={{ top: 10, right: 10, left: 0, bottom: 0 }}>
                 <defs>
                   <linearGradient id="colorIngresos" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="5%" stopColor="#10b981" stopOpacity={0.3}/>
-                    <stop offset="95%" stopColor="#10b981" stopOpacity={0}/>
+                    <stop offset="5%" stopColor="#34d399" stopOpacity={0.35}/>
+                    <stop offset="95%" stopColor="#34d399" stopOpacity={0}/>
                   </linearGradient>
                   <linearGradient id="colorEgresos" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="5%" stopColor="#f43f5e" stopOpacity={0.3}/>
-                    <stop offset="95%" stopColor="#f43f5e" stopOpacity={0}/>
+                    <stop offset="5%" stopColor="#f87171" stopOpacity={0.35}/>
+                    <stop offset="95%" stopColor="#f87171" stopOpacity={0}/>
                   </linearGradient>
                 </defs>
-                <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f1f5f9" />
-                <XAxis 
-                  dataKey="date" 
+                <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#1e293b" />
+                <XAxis
+                  dataKey="date"
                   tickFormatter={(val) => {
                     const d = new Date(val + 'T00:00:00');
                     return `${d.getDate()}/${d.getMonth()+1}`;
                   }}
                   axisLine={false}
                   tickLine={false}
-                  tick={{ fontSize: 12, fill: '#64748b' }}
+                  tick={{ fontSize: 12, fill: '#94a3b8' }}
                   dy={10}
                 />
-                <YAxis 
+                <YAxis
                   axisLine={false}
                   tickLine={false}
-                  tick={{ fontSize: 12, fill: '#64748b' }}
+                  tick={{ fontSize: 12, fill: '#94a3b8' }}
                   tickFormatter={(val) => `S/ ${val}`}
                   dx={-10}
                 />
-                <Tooltip 
-                  contentStyle={{ borderRadius: '16px', border: 'none', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)' }}
+                <Tooltip
+                  contentStyle={{ borderRadius: '12px', border: '1px solid #1e293b', background: '#0f172a', boxShadow: '0 8px 16px -4px rgba(0,0,0,0.4)' }}
+                  labelStyle={{ color: '#e2e8f0' }}
+                  itemStyle={{ color: '#e2e8f0' }}
                   formatter={(value: number) => [`S/ ${value.toFixed(2)}`, '']}
                   labelFormatter={(label) => new Date(label + 'T00:00:00').toLocaleDateString('es-PE', { day: 'numeric', month: 'long' })}
                 />
-                <Area type="monotone" dataKey="ingresos" name="Ingresos" stroke="#10b981" strokeWidth={3} fillOpacity={1} fill="url(#colorIngresos)" />
-                <Area type="monotone" dataKey="egresos" name="Egresos" stroke="#f43f5e" strokeWidth={3} fillOpacity={1} fill="url(#colorEgresos)" />
+                <Area type="monotone" dataKey="ingresos" name="Ingresos" stroke="#34d399" strokeWidth={3} fillOpacity={1} fill="url(#colorIngresos)" />
+                <Area type="monotone" dataKey="egresos" name="Egresos" stroke="#f87171" strokeWidth={3} fillOpacity={1} fill="url(#colorEgresos)" />
               </AreaChart>
             </ResponsiveContainer>
           </div>
